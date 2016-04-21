@@ -1,0 +1,829 @@
+# JVM PYTHON IMPLEMENTATION
+
+import sys, string, time
+import numpy as np
+import itertools
+
+inst_list = {'00': ('nop', '0'),
+             '01': ('aconst_null', '0'),
+             '02': ('iconst_m1', '0'),
+             '03': ('iconst_0', '0'),
+             '04': ('iconst_1', '0'),
+             '05': ('iconst_2', '0'),
+             '06': ('iconst_3', '0'),
+             '07': ('iconst_4', '0'),
+             '08': ('iconst_5', '0'),
+             '09': ('lconst_0', '0'),
+             '0a': ('lconst_1', '0'),
+             '0b': ('fconst_0', '0'),
+             '0c': ('fconst_1', '0'),
+             '0d': ('fconst_2', '0'),
+             '0e': ('dconst_0', '0'),
+             '0f': ('dconst_1', '0'),
+             '10': ('bipush', '1'),
+             '11': ('sipush', '2'),
+             '12': ('ldc', '1'),
+             '13': ('ldc_w', '2'),
+             '14': ('ldc2_w', '2'),
+             '15': ('iload', '1'),
+             '16': ('lload', '1'),
+             '17': ('fload', '1'),
+             '18': ('dload', '1'),
+             '19': ('aload', '1'),
+             '1a': ('iload_0', '0'),
+             '1b': ('iload_1', '0'),
+             '1c': ('iload_2', '0'),
+             '1d': ('iload_3', '0'),
+             '1e': ('lload_0', '0'),
+             '1f': ('lload_1', '0'),
+             '20': ('lload_2', '0'),
+             '21': ('lload_3', '0'),
+             '22': ('fload_0', '0'),
+             '23': ('fload_1', '0'),
+             '24': ('fload_2', '0'),
+             '25': ('fload_3', '0'),
+             '26': ('dload_0', '0'),
+             '27': ('dload_1', '0'),
+             '28': ('dload_2', '0'),
+             '29': ('dload_3', '0'),
+             '2a': ('aload_0', '0'),
+             '2b': ('aload_1', '0'),
+             '2c': ('aload_2', '0'),
+             '2d': ('aload_3', '0'),
+             '2e': ('iaload', '0'),
+             '2f': ('laload', '0'),
+             '30': ('faload', '0'),
+             '31': ('daload', '0'),
+             '32': ('aaload', '0'),
+             '33': ('baload', '0'),
+             '34': ('caload', '0'),
+             '35': ('saload', '0'),
+             '36': ('istore', '1'),
+             '37': ('lstore', '1'),
+             '38': ('fstore', '1'),
+             '39': ('dstore', '1'),
+             '3a': ('astore', '1'),
+             '3b': ('istore_0', '0'),
+             '3c': ('istore_1', '0'),
+             '3d': ('istore_2', '0'),
+             '3e': ('istore_3', '0'),
+             '3f': ('lstore_0', '0'),
+             '40': ('lstore_1', '0'),
+             '41': ('lstore_2', '0'),
+             '42': ('lstore_3', '0'),
+             '43': ('fstore_0', '0'),
+             '44': ('fstore_1', '0'),
+             '45': ('fstore_2', '0'),
+             '46': ('fstore_3', '0'),
+             '47': ('dstore_0', '0'),
+             '48': ('dstore_1', '0'),
+             '49': ('dstore_2', '0'),
+             '4a': ('dstore_3', '0'),
+             '4b': ('astore_0', '0'),
+             '4c': ('astore_1', '0'),
+             '4d': ('astore_2', '0'),
+             '4e': ('astore_3', '0'),
+             '4f': ('iastore', '0'),
+             '50': ('lastore', '0'),
+             '51': ('fastore', '0'),
+             '52': ('dastore', '0'),
+             '53': ('aastore', '0'),
+             '54': ('bastore', '0'),
+             '55': ('castore', '0'),
+             '56': ('sastore', '0'),
+             '57': ('pop', '0'),
+             '58': ('pop2', '0'),
+             '59': ('dup', '0'),
+             '5a': ('dup_x1', '0'),
+             '5b': ('dup_x2', '0'),
+             '5c': ('dup2', '0'),
+             '5d': ('dup2_x1', '0'),
+             '5e': ('dup2_x2', '0'),
+             '5f': ('swap', '0'),
+             '60': ('iadd', '0'),
+             '61': ('ladd', '0'),
+             '62': ('fadd', '0'),
+             '63': ('dadd', '0'),
+             '64': ('isub', '0'),
+             '65': ('lsub', '0'),
+             '66': ('fsub', '0'),
+             '67': ('dsub', '0'),
+             '68': ('imul', '0'),
+             '69': ('lmul', '0'),
+             '6a': ('fmul', '0'),
+             '6b': ('dmul', '0'),
+             '6c': ('idiv', '0'),
+             '6d': ('ldiv', '0'),
+             '6e': ('fdiv', '0'),
+             '6f': ('ddiv', '0'),
+             '70': ('irem', '0'),
+             '71': ('lrem', '0'),
+             '72': ('frem', '0'),
+             '73': ('drem', '0'),
+             '74': ('ineg', '0'),
+             '75': ('lneg', '0'),
+             '76': ('fneg', '0'),
+             '77': ('dneg', '0'),
+             '78': ('ishl', '0'),
+             '79': ('lshl', '0'),
+             '7a': ('ishr', '0'),
+             '7b': ('lshr', '0'),
+             '7c': ('iushr', '0'),
+             '7d': ('lushr', '0'),
+             '7e': ('iand', '0'),
+             '7f': ('land', '0'),
+             '80': ('ior', '0'),
+             '81': ('lor', '0'),
+             '82': ('ixor', '0'),
+             '83': ('lxor', '0'),
+             '84': ('iinc', '2'),
+             '85': ('i2l', '0'),
+             '86': ('i2f', '0'),
+             '87': ('i2d', '0'),
+             '88': ('l2i', '0'),
+             '89': ('l2f', '0'),
+             '8a': ('l2d', '0'),
+             '8b': ('f2i', '0'),
+             '8c': ('f2l', '0'),
+             '8d': ('f2d', '0'),
+             '8e': ('d2i', '0'),
+             '8f': ('d2l', '0'),
+             '90': ('d2f', '0'),
+             '91': ('i2b', '0'),
+             '92': ('i2c', '0'),
+             '93': ('i2s', '0'),
+             '94': ('lcmp', '0'),
+             '95': ('fcmpl', '0'),
+             '96': ('fcmpg', '0'),
+             '97': ('dcmpl', '0'),
+             '98': ('dcmpg', '0'),
+             '99': ('ifeq', '2'),
+             '9a': ('ifne', '2'),
+             '9b': ('iflt', '2'),
+             '9c': ('ifge', '2'),
+             '9d': ('ifgt', '2'),
+             '9e': ('ifle', '2'),
+             '9f': ('if_icmpeq', '2'),
+             'a0': ('if_icmpne', '2'),
+             'a1': ('if_icmplt', '2'),
+             'a2': ('if_icmpge', '2'),
+             'a3': ('if_icmpgt', '2'),
+             'a4': ('if_icmple', '2'),
+             'a5': ('if_acmpeq', '2'),
+             'a6': ('if_acmpne', '2'),
+             'a7': ('goto', '2'),
+             'a8': ('jsr', '2'),
+             'a9': ('ret', '1'),
+             'aa': ('tableswitch', '4+'),
+             'ab': ('lookupswitch', '4+'),
+             'ac': ('ireturn', '0'),
+             'ad': ('lreturn', '0'),
+             'ae': ('freturn', '0'),
+             'af': ('dreturn', '0'),
+             'b0': ('areturn', '0'),
+             'b1': ('return', '0'),
+             }
+
+def READMEM():
+    print 'read mem'
+
+def WRITEMEM():
+    print 'write mem'
+# programming stack pointer as pre-decrement for POP and post-increment for PUSH
+# PC is incremented at the end of each instruction i.e. after instruction has been committed (when pipelined)
+
+def POP(reg):
+    # should POP be like a return TOS or like it is now?
+    global stack_size, stack, local_var, stack_pointer
+    print 'POP'
+    stack_pointer -= 1
+    local_var[reg] = stack[stack_pointer]
+
+
+def PUSH(value):
+    global stack, stack_size, local_var, stack_pointer
+    print 'PUSH'
+    stack[stack_pointer] = value
+    stack_pointer += 1
+
+
+def DUP():
+    global stack, stack_size, local_var, stack_pointer
+    stack[stack_pointer] = stack[stack_pointer-1]
+    stack_pointer += 1
+
+
+def ALU_op(op):
+    # documentation dosent say which regs to use and which regs are available ???????????????????????????????????????????
+    global stack, stack_size, local_var, stack_pointer, method_area, reg_A, reg_B
+    print 'ALU OPERATION',
+    # pop TOS & TOS-1
+    stack_pointer -= 1
+    reg_B = stack[stack_pointer]
+    stack_pointer -= 1
+    reg_A = stack[stack_pointer]
+
+    if op == 1:
+        print 'ADD'
+        result_ALU = reg_A + reg_B
+    elif op == 2:
+        print 'SUB'
+        result_ALU = reg_A - reg_B
+    elif op == 3:
+        print 'AND'
+        result_ALU = reg_A & reg_B
+    elif op == 4:
+        print 'OR'
+        result_ALU = reg_A | reg_B
+    elif op == 5:       # left shift
+        result_ALU = reg_B << shift
+    # push result onto stack
+    stack[stack_pointer] = result_ALU
+    stack_pointer += 1
+
+
+def compare(type):
+    global stack, stack_size, local_var, stack_pointer, method_area, PC
+    #pop TOS & TOS-1
+    stack_pointer -= 1
+    reg_B = stack[stack_pointer]
+    stack_pointer -= 1
+    reg_A = stack[stack_pointer]
+    result = 0
+    #compare
+    if type == 1:
+        result = (reg_A == reg_B)   # eq
+    elif type == 2:
+        result = (reg_A != reg_B)   # ne
+    elif type == 3:
+        result = (reg_A < reg_B)   # lt
+    elif type == 6:
+        result = (reg_A <= reg_B)   # le
+    elif type == 4:
+        result = (reg_A >= reg_B)   # gt
+    elif type == 5:
+        result = (reg_A > reg_B)   # ge
+
+    if result:          #if true
+        JUMP()
+    else:
+        PC += 2
+
+def INC():
+    global stack, stack_size, local_var, stack_pointer, method_area, PC
+    # reprogram using alu_operation(add)
+    # push local variable onto the stack
+    # add 1 to stack might need extra space on the stack to implement
+    reg = int(method_area[PC+1])
+    reg_A = int(local_var[reg])
+    PC += 1
+    reg_A += int(method_area[PC+1])
+    local_var[reg] = reg_A
+    PC += 1
+
+def JUMP():
+    global stack, stack_size, local_var, stack_pointer, method_area, PC
+    reg_A = int(method_area[PC+1], 16)
+    reg_B = int(method_area[PC+2], 16)
+    # limit int to two bytes
+    reg_A = reg_A << 8
+    offset = reg_A | reg_B
+    if offset & 0b1000000000000000:
+        offset = 65536 - offset
+        PC = PC - offset
+    else:
+        PC = PC + offset
+
+def get_method_info(filename):
+    global stack_size, method_area, local_size
+    file = open(filename, 'r')
+    lines = file.readlines()
+    for x in range(len(lines)):
+        line = lines[x].rstrip('\n')
+        inst = string.split(line)
+        print inst
+        if line == "code":
+            _method_area = lines[x+1]
+            method_area = [i+j for i, j in zip(_method_area[::2], _method_area[1::2])]
+            print method_area
+            print 'len of bytecode:', len(method_area)
+        elif inst[0] == 'stack':
+            stack_size = int(inst[2])
+        elif inst[0] == 'locals':
+            local_size = int(inst[2])
+
+if __name__ == "__main__":
+    filename = sys.argv[1]
+    line_num = 1
+    method_area = []
+    stack_size = 0
+    get_method_info(filename)
+    stack = [0] * stack_size
+    local_var = [0] * local_size
+    PC = 0
+    reg_A = 0
+    reg_B = 0
+    cmp_a = 0
+    cmp_b = 0
+    stack_pointer = 0
+    shift = 0
+
+    while PC < len(method_area):
+        # instruction fetch
+        inst_reg = method_area[PC]
+        # decode & execute
+        if inst_reg in inst_list:
+            print ''
+            print 'stack', stack, 'SP:', stack_pointer
+            print 'locals', local_var
+            print line_num, '::', method_area[PC], ':',
+            print inst_list[method_area[PC]][0],
+            if method_area[PC] == '03':    # iconst_0
+                PUSH(0)
+            elif method_area[PC] == '07':   # iconst_4
+                PUSH(4)
+            elif method_area[PC] == '06':   # iconst_3
+                PUSH(3)
+            elif method_area[PC] == '08':   # iconst_5
+                PUSH(5)
+            elif method_area[PC] == '15':     # iload + 1 operand
+                reg = int(method_area[PC+1])
+                PUSH(local_var[reg])
+                PC += 1
+            elif method_area[PC] == '1b':    #iload_1
+                PUSH(local_var[1])
+            elif method_area[PC] == '1c':    #iload_2
+                PUSH(local_var[2])
+            elif method_area[PC] == '1d':    #iload_3
+                PUSH(local_var[3])
+            elif method_area[PC] == '36':   # istore + 1 operand
+                reg = int(method_area[PC+1])
+                POP(reg)
+                PC += 1
+            elif method_area[PC] == '3c':   # istore_1
+                POP(1)
+            elif method_area[PC] == '3d':   # istore_2
+                POP(2)
+            elif method_area[PC] == '3e':   # istore_3
+                POP(3)
+            elif method_area[PC] == '59':   # dup
+                DUP()
+            elif method_area[PC] == '60':   # iadd
+                ALU_op(1)
+            elif method_area[PC] == '64':   # isub
+                ALU_op(2)
+            elif method_area[PC] == '84':   # iinc + 2 operands
+                INC()
+                print 'inc'
+            elif method_area[PC] == '9f':    # if_icmpeq + 2 operands (equal to)
+                compare(1)
+                PC = PC- 1
+            elif method_area[PC] == 'a0':    # if_icmpne + 2 operands (not equal to)
+                compare(2)
+                PC = PC- 1
+            elif method_area[PC] == 'a1':    # if_icmplt + 2 operands (less then)
+                compare(3)
+                PC = PC- 1
+            elif method_area[PC] == 'a2':    # if_icmpge + 2 operands (greater than or equal to)
+                compare(4)
+                PC = PC- 1
+            elif method_area[PC] == 'a3':    # if_icmpgt + 2 operands (greater than)
+                compare(5)
+                PC = PC- 1
+            elif method_area[PC] == 'a4':    # if_icmple + 2 operands (less then or equal to)
+                compare(6)
+                PC = PC- 1
+            elif method_area[PC] == 'a7':    # goto + 2 operands
+                JUMP()
+                PC = PC- 1
+                print "-----------------------------------------------------------------"
+            elif method_area[PC] == 'b1':    # return
+                exit()
+            #no_of_operands = int(inst_list[method_area[PC]][1])
+            #if no_of_operands > 0:
+                #for m in range(1, no_of_operands+1):
+                    #PC += 1
+                    #print '->', 'operand', m, ':', method_area[PC],
+            line_num += 1
+
+            PC += 1
+        else:
+            #exit()
+            print 'byte code not found'
+
+			
+			
+			----------------------------------------------------------------------------------------
+['method2.byc']
+['stack', 'size', '0002']
+['locals', 'size', '0006']
+['code']
+['07', '3c', '06', '3d', '03', '59', '36', '04', '3e', '03', '36', '05', '15', '05', '08', 'a2', '00', '18', '1d', '1b', '60', '15', '05', '60', '3e', '15', '04', '1b', '60', '1c', '64', '36', '04', '84', '05', '01', 'a7', 'ff', 'e8', 'b1']
+len of bytecode: 40
+['073c063d035936043e033605150508a200181d1b601505603e15041b601c643604840501a7ffe8b1']
+
+stack [0, 0] SP: 0
+locals [0, 0, 0, 0, 0, 0]
+1 :: 07 : iconst_4 PUSH
+
+stack [4, 0] SP: 1
+locals [0, 0, 0, 0, 0, 0]
+2 :: 3c : istore_1 POP
+
+stack [4, 0] SP: 0
+locals [0, 4, 0, 0, 0, 0]
+3 :: 06 : iconst_3 PUSH
+
+stack [3, 0] SP: 1
+locals [0, 4, 0, 0, 0, 0]
+4 :: 3d : istore_2 POP
+
+stack [3, 0] SP: 0
+locals [0, 4, 3, 0, 0, 0]
+5 :: 03 : iconst_0 PUSH
+
+stack [0, 0] SP: 1
+locals [0, 4, 3, 0, 0, 0]
+6 :: 59 : dup 
+stack [0, 0] SP: 2
+locals [0, 4, 3, 0, 0, 0]
+7 :: 36 : istore POP
+
+stack [0, 0] SP: 1
+locals [0, 4, 3, 0, 0, 0]
+8 :: 3e : istore_3 POP
+
+stack [0, 0] SP: 0
+locals [0, 4, 3, 0, 0, 0]
+9 :: 03 : iconst_0 PUSH
+
+stack [0, 0] SP: 1
+locals [0, 4, 3, 0, 0, 0]
+10 :: 36 : istore POP
+
+stack [0, 0] SP: 0
+locals [0, 4, 3, 0, 0, 0]
+11 :: 15 : iload PUSH
+
+stack [0, 0] SP: 1
+locals [0, 4, 3, 0, 0, 0]
+12 :: 08 : iconst_5 PUSH
+
+stack [0, 5] SP: 2
+locals [0, 4, 3, 0, 0, 0]
+13 :: a2 : if_icmpge 
+stack [0, 5] SP: 0
+locals [0, 4, 3, 0, 0, 0]
+14 :: 18 : dload 
+stack [0, 5] SP: 0
+locals [0, 4, 3, 0, 0, 0]
+15 :: 1d : iload_3 PUSH
+
+stack [0, 5] SP: 1
+locals [0, 4, 3, 0, 0, 0]
+16 :: 1b : iload_1 PUSH
+
+stack [0, 4] SP: 2
+locals [0, 4, 3, 0, 0, 0]
+17 :: 60 : iadd ALU OPERATION ADD
+
+stack [4, 4] SP: 1
+locals [0, 4, 3, 0, 0, 0]
+18 :: 15 : iload PUSH
+
+stack [4, 0] SP: 2
+locals [0, 4, 3, 0, 0, 0]
+19 :: 60 : iadd ALU OPERATION ADD
+
+stack [4, 0] SP: 1
+locals [0, 4, 3, 0, 0, 0]
+20 :: 3e : istore_3 POP
+
+stack [4, 0] SP: 0
+locals [0, 4, 3, 4, 0, 0]
+21 :: 15 : iload PUSH
+
+stack [0, 0] SP: 1
+locals [0, 4, 3, 4, 0, 0]
+22 :: 1b : iload_1 PUSH
+
+stack [0, 4] SP: 2
+locals [0, 4, 3, 4, 0, 0]
+23 :: 60 : iadd ALU OPERATION ADD
+
+stack [4, 4] SP: 1
+locals [0, 4, 3, 4, 0, 0]
+24 :: 1c : iload_2 PUSH
+
+stack [4, 3] SP: 2
+locals [0, 4, 3, 4, 0, 0]
+25 :: 64 : isub ALU OPERATION SUB
+
+stack [1, 3] SP: 1
+locals [0, 4, 3, 4, 0, 0]
+26 :: 36 : istore POP
+
+stack [1, 3] SP: 0
+locals [0, 4, 3, 4, 1, 0]
+27 :: 84 : iinc inc
+
+stack [1, 3] SP: 0
+locals [0, 4, 3, 4, 1, 1]
+28 :: a7 : goto -----------------------------------------------------------------
+
+stack [1, 3] SP: 0
+locals [0, 4, 3, 4, 1, 1]
+29 :: 15 : iload PUSH
+
+stack [1, 3] SP: 1
+locals [0, 4, 3, 4, 1, 1]
+30 :: 08 : iconst_5 PUSH
+
+stack [1, 5] SP: 2
+locals [0, 4, 3, 4, 1, 1]
+31 :: a2 : if_icmpge 
+stack [1, 5] SP: 0
+locals [0, 4, 3, 4, 1, 1]
+32 :: 18 : dload 
+stack [1, 5] SP: 0
+locals [0, 4, 3, 4, 1, 1]
+33 :: 1d : iload_3 PUSH
+
+stack [4, 5] SP: 1
+locals [0, 4, 3, 4, 1, 1]
+34 :: 1b : iload_1 PUSH
+
+stack [4, 4] SP: 2
+locals [0, 4, 3, 4, 1, 1]
+35 :: 60 : iadd ALU OPERATION ADD
+
+stack [8, 4] SP: 1
+locals [0, 4, 3, 4, 1, 1]
+36 :: 15 : iload PUSH
+
+stack [8, 1] SP: 2
+locals [0, 4, 3, 4, 1, 1]
+37 :: 60 : iadd ALU OPERATION ADD
+
+stack [9, 1] SP: 1
+locals [0, 4, 3, 4, 1, 1]
+38 :: 3e : istore_3 POP
+
+stack [9, 1] SP: 0
+locals [0, 4, 3, 9, 1, 1]
+39 :: 15 : iload PUSH
+
+stack [1, 1] SP: 1
+locals [0, 4, 3, 9, 1, 1]
+40 :: 1b : iload_1 PUSH
+
+stack [1, 4] SP: 2
+locals [0, 4, 3, 9, 1, 1]
+41 :: 60 : iadd ALU OPERATION ADD
+
+stack [5, 4] SP: 1
+locals [0, 4, 3, 9, 1, 1]
+42 :: 1c : iload_2 PUSH
+
+stack [5, 3] SP: 2
+locals [0, 4, 3, 9, 1, 1]
+43 :: 64 : isub ALU OPERATION SUB
+
+stack [2, 3] SP: 1
+locals [0, 4, 3, 9, 1, 1]
+44 :: 36 : istore POP
+
+stack [2, 3] SP: 0
+locals [0, 4, 3, 9, 2, 1]
+45 :: 84 : iinc inc
+
+stack [2, 3] SP: 0
+locals [0, 4, 3, 9, 2, 2]
+46 :: a7 : goto -----------------------------------------------------------------
+
+stack [2, 3] SP: 0
+locals [0, 4, 3, 9, 2, 2]
+47 :: 15 : iload PUSH
+
+stack [2, 3] SP: 1
+locals [0, 4, 3, 9, 2, 2]
+48 :: 08 : iconst_5 PUSH
+
+stack [2, 5] SP: 2
+locals [0, 4, 3, 9, 2, 2]
+49 :: a2 : if_icmpge 
+stack [2, 5] SP: 0
+locals [0, 4, 3, 9, 2, 2]
+50 :: 18 : dload 
+stack [2, 5] SP: 0
+locals [0, 4, 3, 9, 2, 2]
+51 :: 1d : iload_3 PUSH
+
+stack [9, 5] SP: 1
+locals [0, 4, 3, 9, 2, 2]
+52 :: 1b : iload_1 PUSH
+
+stack [9, 4] SP: 2
+locals [0, 4, 3, 9, 2, 2]
+53 :: 60 : iadd ALU OPERATION ADD
+
+stack [13, 4] SP: 1
+locals [0, 4, 3, 9, 2, 2]
+54 :: 15 : iload PUSH
+
+stack [13, 2] SP: 2
+locals [0, 4, 3, 9, 2, 2]
+55 :: 60 : iadd ALU OPERATION ADD
+
+stack [15, 2] SP: 1
+locals [0, 4, 3, 9, 2, 2]
+56 :: 3e : istore_3 POP
+
+stack [15, 2] SP: 0
+locals [0, 4, 3, 15, 2, 2]
+57 :: 15 : iload PUSH
+
+stack [2, 2] SP: 1
+locals [0, 4, 3, 15, 2, 2]
+58 :: 1b : iload_1 PUSH
+
+stack [2, 4] SP: 2
+locals [0, 4, 3, 15, 2, 2]
+59 :: 60 : iadd ALU OPERATION ADD
+
+stack [6, 4] SP: 1
+locals [0, 4, 3, 15, 2, 2]
+60 :: 1c : iload_2 PUSH
+
+stack [6, 3] SP: 2
+locals [0, 4, 3, 15, 2, 2]
+61 :: 64 : isub ALU OPERATION SUB
+
+stack [3, 3] SP: 1
+locals [0, 4, 3, 15, 2, 2]
+62 :: 36 : istore POP
+
+stack [3, 3] SP: 0
+locals [0, 4, 3, 15, 3, 2]
+63 :: 84 : iinc inc
+
+stack [3, 3] SP: 0
+locals [0, 4, 3, 15, 3, 3]
+64 :: a7 : goto -----------------------------------------------------------------
+
+stack [3, 3] SP: 0
+locals [0, 4, 3, 15, 3, 3]
+65 :: 15 : iload PUSH
+
+stack [3, 3] SP: 1
+locals [0, 4, 3, 15, 3, 3]
+66 :: 08 : iconst_5 PUSH
+
+stack [3, 5] SP: 2
+locals [0, 4, 3, 15, 3, 3]
+67 :: a2 : if_icmpge 
+stack [3, 5] SP: 0
+locals [0, 4, 3, 15, 3, 3]
+68 :: 18 : dload 
+stack [3, 5] SP: 0
+locals [0, 4, 3, 15, 3, 3]
+69 :: 1d : iload_3 PUSH
+
+stack [15, 5] SP: 1
+locals [0, 4, 3, 15, 3, 3]
+70 :: 1b : iload_1 PUSH
+
+stack [15, 4] SP: 2
+locals [0, 4, 3, 15, 3, 3]
+71 :: 60 : iadd ALU OPERATION ADD
+
+stack [19, 4] SP: 1
+locals [0, 4, 3, 15, 3, 3]
+72 :: 15 : iload PUSH
+
+stack [19, 3] SP: 2
+locals [0, 4, 3, 15, 3, 3]
+73 :: 60 : iadd ALU OPERATION ADD
+
+stack [22, 3] SP: 1
+locals [0, 4, 3, 15, 3, 3]
+74 :: 3e : istore_3 POP
+
+stack [22, 3] SP: 0
+locals [0, 4, 3, 22, 3, 3]
+75 :: 15 : iload PUSH
+
+stack [3, 3] SP: 1
+locals [0, 4, 3, 22, 3, 3]
+76 :: 1b : iload_1 PUSH
+
+stack [3, 4] SP: 2
+locals [0, 4, 3, 22, 3, 3]
+77 :: 60 : iadd ALU OPERATION ADD
+
+stack [7, 4] SP: 1
+locals [0, 4, 3, 22, 3, 3]
+78 :: 1c : iload_2 PUSH
+
+stack [7, 3] SP: 2
+locals [0, 4, 3, 22, 3, 3]
+79 :: 64 : isub ALU OPERATION SUB
+
+stack [4, 3] SP: 1
+locals [0, 4, 3, 22, 3, 3]
+80 :: 36 : istore POP
+
+stack [4, 3] SP: 0
+locals [0, 4, 3, 22, 4, 3]
+81 :: 84 : iinc inc
+
+stack [4, 3] SP: 0
+locals [0, 4, 3, 22, 4, 4]
+82 :: a7 : goto -----------------------------------------------------------------
+
+stack [4, 3] SP: 0
+locals [0, 4, 3, 22, 4, 4]
+83 :: 15 : iload PUSH
+
+stack [4, 3] SP: 1
+locals [0, 4, 3, 22, 4, 4]
+84 :: 08 : iconst_5 PUSH
+
+stack [4, 5] SP: 2
+locals [0, 4, 3, 22, 4, 4]
+85 :: a2 : if_icmpge 
+stack [4, 5] SP: 0
+locals [0, 4, 3, 22, 4, 4]
+86 :: 18 : dload 
+stack [4, 5] SP: 0
+locals [0, 4, 3, 22, 4, 4]
+87 :: 1d : iload_3 PUSH
+
+stack [22, 5] SP: 1
+locals [0, 4, 3, 22, 4, 4]
+88 :: 1b : iload_1 PUSH
+
+stack [22, 4] SP: 2
+locals [0, 4, 3, 22, 4, 4]
+89 :: 60 : iadd ALU OPERATION ADD
+
+stack [26, 4] SP: 1
+locals [0, 4, 3, 22, 4, 4]
+90 :: 15 : iload PUSH
+
+stack [26, 4] SP: 2
+locals [0, 4, 3, 22, 4, 4]
+91 :: 60 : iadd ALU OPERATION ADD
+
+stack [30, 4] SP: 1
+locals [0, 4, 3, 22, 4, 4]
+92 :: 3e : istore_3 POP
+
+stack [30, 4] SP: 0
+locals [0, 4, 3, 30, 4, 4]
+93 :: 15 : iload PUSH
+
+stack [4, 4] SP: 1
+locals [0, 4, 3, 30, 4, 4]
+94 :: 1b : iload_1 PUSH
+
+stack [4, 4] SP: 2
+locals [0, 4, 3, 30, 4, 4]
+95 :: 60 : iadd ALU OPERATION ADD
+
+stack [8, 4] SP: 1
+locals [0, 4, 3, 30, 4, 4]
+96 :: 1c : iload_2 PUSH
+
+stack [8, 3] SP: 2
+locals [0, 4, 3, 30, 4, 4]
+97 :: 64 : isub ALU OPERATION SUB
+
+stack [5, 3] SP: 1
+locals [0, 4, 3, 30, 4, 4]
+98 :: 36 : istore POP
+
+stack [5, 3] SP: 0
+locals [0, 4, 3, 30, 5, 4]
+99 :: 84 : iinc inc
+
+stack [5, 3] SP: 0
+locals [0, 4, 3, 30, 5, 5]
+100 :: a7 : goto -----------------------------------------------------------------
+
+stack [5, 3] SP: 0
+locals [0, 4, 3, 30, 5, 5]
+101 :: 15 : iload PUSH
+
+stack [5, 3] SP: 1
+locals [0, 4, 3, 30, 5, 5]
+102 :: 08 : iconst_5 PUSH
+
+stack [5, 5] SP: 2
+locals [0, 4, 3, 30, 5, 5]
+103 :: a2 : if_icmpge 
+stack [5, 5] SP: 0
+locals [0, 4, 3, 30, 5, 5]
+104 :: b1 : return
+
+Process finished with exit code 0

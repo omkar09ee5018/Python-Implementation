@@ -1,0 +1,65 @@
+
+ PC: 0 local var: [0 0]
+Stack: [0 0 0] Stack Depth: 0
+Heap: 0
+iconst_5
+ PC: 1 local var: [0 0]
+Stack: [5 0 0] Stack Depth: 1
+Heap: 0
+newarray
+ PC: 3 local var: [0 0]
+Stack: [0 0 0] Stack Depth: 1
+Heap: 5
+astore_1
+ PC: 4 local var: [0 0]
+Stack: [0 0 0] Stack Depth: 0
+Heap: 5
+aload_1
+ PC: 5 local var: [0 0]
+Stack: [0 0 0] Stack Depth: 1
+Heap: 5
+iconst_0
+ PC: 6 local var: [0 0]
+Stack: [0 0 0] Stack Depth: 2
+Heap: 5
+iconst_1
+ PC: 7 local var: [0 0]
+Stack: [0 0 1] Stack Depth: 3
+Heap: 5
+iastore
+ PC: 8 local var: [0 0]
+Stack: [0 0 1] Stack Depth: 0
+Heap: 5
+aload_1
+ PC: 9 local var: [0 0]
+Stack: [0 0 1] Stack Depth: 1
+Heap: 5
+iconst_2
+ PC: 10 local var: [0 0]
+Stack: [0 2 1] Stack Depth: 2
+Heap: 5
+bipush
+ PC: 12 local var: [0 0]
+Stack: [ 0  2 10] Stack Depth: 3
+Heap: 5
+iastore
+ PC: 13 local var: [0 0]
+Stack: [ 0  2 10] Stack Depth: 0
+Heap: 5
+aload_1
+ PC: 14 local var: [0 0]
+Stack: [ 0  2 10] Stack Depth: 1
+Heap: 5
+iconst_3
+ PC: 15 local var: [0 0]
+Stack: [ 0  3 10] Stack Depth: 2
+Heap: 5
+bipush
+ PC: 17 local var: [0 0]
+Stack: [  0   3 100] Stack Depth: 3
+Heap: 5
+iastore
+ PC: 18 local var: [0 0]
+Stack: [  0   3 100] Stack Depth: 0
+Heap: 5
+return

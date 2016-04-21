@@ -1,0 +1,584 @@
+# JVM PYTHON IMPLEMENTATION
+
+import sys, string, time
+import numpy as np
+import itertools
+
+inst_list = {int('00', 16): ('nop', '0'),
+             int('01', 16): ('aconst_null', '0'),
+             int('02', 16): ('iconst_m1', '0'),
+             int('03', 16): ('iconst_0', '0'),
+             int('04', 16): ('iconst_1', '0'),
+             int('05', 16): ('iconst_2', '0'),
+             int('06', 16): ('iconst_3', '0'),
+             int('07', 16): ('iconst_4', '0'),
+             int('08', 16): ('iconst_5', '0'),
+             int('09', 16): ('lconst_0', '0'),
+             int('0a', 16): ('lconst_1', '0'),
+             #int('0b, 16)': ('fconst_0', '0'),
+             #int('0c, 16)': ('fconst_1', '0'),
+             #int('0d, 16)': ('fconst_2', '0'),
+             #int('0e, 16)': ('dconst_0', '0'),
+             #int('0f, 16)': ('dconst_1', '0'),
+             int('10', 16): ('bipush', '1'),
+             int('11', 16): ('sipush', '2'),
+             int('12', 16): ('ldc', '1'),
+             int('13', 16): ('ldc_w', '2'),
+             int('14', 16): ('ldc2_w', '2'),
+             int('15', 16): ('iload', '1'),
+             int('16', 16): ('lload', '1'),
+             #int(#'17, 16)': ('fload', '1'),
+             #int(#'18, 16)': ('dload', '1'),
+             int('19', 16): ('aload', '1'),
+             int('1a', 16): ('iload_0', '0'),
+             int('1b', 16): ('iload_1', '0'),
+             int('1c', 16): ('iload_2', '0'),
+             int('1d', 16): ('iload_3', '0'),
+             int('1e', 16): ('lload_0', '0'),
+             int('1f', 16): ('lload_1', '0'),
+             int('20', 16): ('lload_2', '0'),
+             int('21', 16): ('lload_3', '0'),
+             #int(#'22, 16)': ('fload_0', '0'),
+             #int(#'23, 16)': ('fload_1', '0'),
+             #int(#'24, 16)': ('fload_2', '0'),
+             #int(#'25, 16)': ('fload_3', '0'),
+             #int(#'26, 16)': ('dload_0', '0'),
+             #int(#'27, 16)': ('dload_1', '0'),
+             #int(#'28, 16)': ('dload_2', '0'),
+             #int(#'29, 16)': ('dload_3', '0'),
+             int('2a', 16): ('aload_0', '0'),
+             int('2b', 16): ('aload_1', '0'),
+             int('2c', 16): ('aload_2', '0'),
+             int('2d', 16): ('aload_3', '0'),
+             int('2e', 16): ('iaload', '0'),
+             int('2f', 16): ('laload', '0'),
+             int('30', 16): ('faload', '0'),
+             int('31', 16): ('daload', '0'),
+             int('32', 16): ('aaload', '0'),
+             int('33', 16): ('baload', '0'),
+             int('34', 16): ('caload', '0'),
+             int('35', 16): ('saload', '0'),
+             int('36', 16): ('istore', '1'),
+             int('37', 16): ('lstore', '1'),
+             #int(#'38, 16)': ('fstore', '1'),
+             #int(#'39, 16)': ('dstore', '1'),
+             int('3a', 16): ('astore', '1'),
+             int('3b', 16): ('istore_0', '0'),
+             int('3c', 16): ('istore_1', '0'),
+             int('3d', 16): ('istore_2', '0'),
+             int('3e', 16): ('istore_3', '0'),
+             int('3f', 16): ('lstore_0', '0'),
+             int('40', 16): ('lstore_1', '0'),
+             int('41', 16): ('lstore_2', '0'),
+             int('42', 16): ('lstore_3', '0'),
+             #int(#'43, 16)': ('fstore_0', '0'),
+             #int(#'44, 16)': ('fstore_1', '0'),
+             #int(#'45, 16)': ('fstore_2', '0'),
+             #int(#'46, 16)': ('fstore_3', '0'),
+             #int(#'47, 16)': ('dstore_0', '0'),
+             #int(#'48, 16)': ('dstore_1', '0'),
+             #int(#'49, 16)': ('dstore_2', '0'),
+             #int(#'4a, 16)': ('dstore_3', '0'),
+             int('4b', 16): ('astore_0', '0'),
+             int('4c', 16): ('astore_1', '0'),
+             int('4d', 16): ('astore_2', '0'),
+             int('4e', 16): ('astore_3', '0'),
+             int('4f', 16): ('iastore', '0'),
+             int('50', 16): ('lastore', '0'),
+             #int(#'51, 16)': ('fastore', '0'),
+             #int(#'52, 16)': ('dastore', '0'),
+             int('53', 16): ('aastore', '0'),
+             int('54', 16): ('bastore', '0'),
+             int('55', 16): ('castore', '0'),
+             int('56', 16): ('sastore', '0'),
+             int('57', 16): ('pop', '0'),
+             int('58', 16): ('pop2', '0'),
+             int('59', 16): ('dup', '0'),
+             int('5a', 16): ('dup_x1', '0'),
+             int('5b', 16): ('dup_x2', '0'),
+             int('5c', 16): ('dup2', '0'),
+             int('5d', 16): ('dup2_x1', '0'),
+             int('5e', 16): ('dup2_x2', '0'),
+             int('5f', 16): ('swap', '0'),
+             int('60', 16): ('iadd', '0'),
+             int('61', 16): ('ladd', '0'),
+             #int(#'62, 16)': ('fadd', '0'),
+             #int('63', 16): ('dadd', '0'),
+             int('64', 16): ('isub', '0'),
+             int('65', 16): ('lsub', '0'),
+             #int(#'66, 16)': ('fsub', '0'),
+             #int(#'67, 16)': ('dsub', '0'),
+             int('68', 16): ('imul', '0'),
+             int('69', 16): ('lmul', '0'),
+             #int('6a, 16)': ('fmul', '0'),
+             #int('6b, 16)': ('dmul', '0'),
+             int('6c', 16): ('idiv', '0'),
+             int('6d', 16): ('ldiv', '0'),
+             #int(#'6e, 16)': ('fdiv', '0'),
+             #int(#'6f, 16)': ('ddiv', '0'),
+             int('70', 16): ('irem', '0'),
+             int('71', 16): ('lrem', '0'),
+             #int(#'72, 16)': ('frem', '0'),
+             #int(#'73, 16)': ('drem', '0'),
+             int('74', 16): ('ineg', '0'),
+             int('75', 16): ('lneg', '0'),
+             #int(#'76, 16)': ('fneg', '0'),
+             #int(#'77, 16)': ('dneg', '0'),
+             int('78', 16): ('ishl', '0'),
+             int('79', 16): ('lshl', '0'),
+             int('7a', 16): ('ishr', '0'),
+             int('7b', 16): ('lshr', '0'),
+             int('7c', 16): ('iushr', '0'),
+             int('7d', 16): ('lushr', '0'),
+             int('7e', 16): ('iand', '0'),
+             int('7f', 16): ('land', '0'),
+             int('80', 16): ('ior', '0'),
+             int('81', 16): ('lor', '0'),
+             int('82', 16): ('ixor', '0'),
+             int('83', 16): ('lxor', '0'),
+             int('84', 16): ('iinc', '2'),
+             int('85', 16): ('i2l', '0'),
+             #int(#'86, 16)': ('i2f', '0'),
+             #int(#'87, 16)': ('i2d', '0'),
+             int('88', 16): ('l2i', '0'),
+             #int(#'89, 16)': ('l2f', '0'),
+             #int(#'8a, 16)': ('l2d', '0'),
+             #int(#'8b, 16)': ('f2i', '0'),
+             #int(#'8c, 16)': ('f2l', '0'),
+             #int(#'8d, 16)': ('f2d', '0'),
+             #int(#'8e, 16)': ('d2i', '0'),
+             #int(#'8f, 16)': ('d2l', '0'),
+             #int(#'90, 16)': ('d2f', '0'),
+             int('91', 16): ('i2b', '0'),
+             int('92', 16): ('i2c', '0'),
+             int('93', 16): ('i2s', '0'),
+             int('94', 16): ('lcmp', '0'),
+             #int(#'95, 16)': ('fcmpl', '0'),
+             #int(#'96, 16)': ('fcmpg', '0'),
+             int('97', 16): ('dcmpl', '0'),
+             int('98', 16): ('dcmpg', '0'),
+             int('99', 16): ('ifeq', '2'),
+             int('9a', 16): ('ifne', '2'),
+             int('9b', 16): ('iflt', '2'),
+             int('9c', 16): ('ifge', '2'),
+             int('9d', 16): ('ifgt', '2'),
+             int('9e', 16): ('ifle', '2'),
+             int('9f', 16): ('if_icmpeq', '2'),
+             int('a0', 16): ('if_icmpne', '2'),
+             int('a1', 16): ('if_icmplt', '2'),
+             int('a2', 16): ('if_icmpge', '2'),
+             int('a3', 16): ('if_icmpgt', '2'),
+             int('a4', 16): ('if_icmple', '2'),
+             int('a5', 16): ('if_acmpeq', '2'),
+             int('a6', 16): ('if_acmpne', '2'),
+             int('a7', 16): ('goto', '2'),
+             int('a8', 16): ('jsr', '2'),
+             int('a9', 16): ('ret', '1'),
+             int('aa', 16): ('tableswitch', '4+'),
+             int('ab', 16): ('lookupswitch', '4+'),
+             int('ac', 16): ('ireturn', '0'),
+             int('ad', 16): ('lreturn', '0'),
+             #int(#'ae, 16)': ('freturn', '0'),
+             #int(#'af, 16)': ('dreturn', '0'),
+             int('b0', 16): ('areturn', '0'),
+             int('b1', 16): ('return', '0'),
+             }
+
+# programming stack pointer as pre-decrement for POP and post-increment for PUSH
+# PC is incremented at the end of each instruction i.e. after instruction has been committed (when pipelined)
+# value, result is a temp register not visible to programmers
+
+
+# how to keep track that number pushed onto the stack is a int, double, long, float etc???
+# does the JVM handle this internally in the bytecode?
+# what to do about objects? (how to implement heap)?
+
+
+def readmem(address):
+    global memory
+    # read memory needs only address lines and data is returned
+    print 'read mem'
+    return memory[address]
+
+def writemem(address, value):
+    global memory
+    # write memory needs both address and data
+    print 'write mem'
+    memory[address] = value
+
+def POP():
+    global stack_size, stack, local_var, stack_pointer, memory, local_var_ptr
+    print 'POP'
+    # add sanity checks
+    stack_pointer -= 1
+    return readmem(stack_pointer)
+
+def POP2():
+    global stack_size, stack, local_var, stack_pointer, memory, local_var_ptr, reg_A, reg_B
+    reg_A = POP()       # tos
+    reg_B = POP()       # tos-1
+
+def PUSH(value):
+    global stack, stack_size, local_var, stack_pointer, memory, local_var_ptr
+    print 'PUSH'
+    # add sanity checks
+    writemem(stack_pointer, value)
+    stack_pointer += 1
+
+
+def DUP():
+    global stack, stack_size, local_var, stack_pointer, memory, local_var_ptr
+    value = readmem(stack_pointer - 1)
+    writemem(stack_pointer, value)
+    #memory[stack_pointer] = memory[stack_pointer-1]
+    stack_pointer += 1
+
+def ALU_op(op):
+    global stack, stack_size, local_var, stack_pointer, method_area, reg_A, reg_B, memory, local_var_ptr
+    print 'ALU OPERATION',
+    # pop TOS & TOS-1
+    reg_B = POP()
+    reg_A = POP()
+
+    if op == 1:
+        print 'ADD'
+        result_ALU = reg_A + reg_B
+    elif op == 2:
+        print 'SUB'
+        result_ALU = reg_A - reg_B
+    elif op == 3:
+        print 'AND'
+        result_ALU = reg_A & reg_B
+    elif op == 4:
+        print 'OR'
+        result_ALU = reg_A | reg_B
+    elif op == 5:       # left shift
+        result_ALU = reg_B << shift
+    # push result onto stack
+    #stack[stack_pointer] = result_ALU
+    writemem(stack_pointer, result_ALU)
+    stack_pointer += 1
+
+def compare(type):
+    global stack, stack_size, local_var, stack_pointer, method_area, PC, memory, local_var_ptr
+
+    #pop TOS & TOS-1
+
+    reg_B = POP()
+    reg_A = POP()
+    result = 0
+
+    #compare
+    if type == 1:
+        result = (reg_A == reg_B)   # eq
+    elif type == 2:
+        result = (reg_A != reg_B)   # ne
+    elif type == 3:
+        result = (reg_A < reg_B)   # lt
+    elif type == 6:
+        result = (reg_A <= reg_B)   # le
+    elif type == 4:
+        result = (reg_A >= reg_B)   # gt
+    elif type == 5:
+        result = (reg_A > reg_B)   # ge
+
+    if result:          #if true
+        offset = OFFSET()
+        JUMP(offset)
+    else:
+        PC += 2
+
+def INC():
+    global stack, stack_size, local_var, stack_pointer, method_area, PC, memory, local_var_ptr
+    # reprogram using alu_operation(add)
+    # push local variable onto the stack
+    # add 1 to stack might need extra space on the stack to implement
+    print 'inc'
+    reg = int(method_area[PC+1])
+    reg_A = int(memory[local_var_ptr+reg])
+    PC += 1
+    reg_A += int(method_area[PC+1])
+    memory[local_var_ptr+reg] = reg_A
+    PC += 1
+
+def OFFSET():
+    global stack, stack_size, local_var, stack_pointer, method_area, PC, memory, local_var_ptr
+    # reg_A = int(method_area[PC+1], 16)
+    reg_A = int(readmem(PC+1), 16)
+    # reg_B = int(method_area[PC+2], 16)
+    reg_B = int(readmem(PC+2), 16)
+    # limit int to two bytes
+    reg_A = reg_A << 8
+    offset = reg_A | reg_B
+    return offset
+
+def JUMP(offset):
+    global stack, stack_size, local_var, stack_pointer, method_area, PC, memory, local_var_ptr
+
+    if offset & 0b1000000000000000:
+        offset = 65536 - offset
+        PC = PC - offset
+    else:
+        PC = PC + offset
+    PC = PC- 1
+
+def get_method_info(filename):
+    global stack_size, method_area, local_size, memory, local_var_ptr
+    file = open(filename, 'r')
+    lines = file.readlines()
+    for x in range(len(lines)):
+        line = lines[x].rstrip('\n')
+        inst = string.split(line)
+        print inst
+        if line == "code":
+            _method_area = lines[x+1]
+            method_area = [i+j for i, j in zip(_method_area[::2], _method_area[1::2])]
+            print method_area
+            print 'len of bytecode:', len(method_area)
+        elif inst[0] == 'stack':
+            stack_size = int(inst[2])
+        elif inst[0] == 'locals':
+            local_size = int(inst[2])
+
+if __name__ == "__main__":
+    filename = sys.argv[1]
+    line_num = 1
+    method_area = []
+    stack_size = 0
+    get_method_info(filename)
+    stack = [0] * stack_size
+    local_var = [0] * local_size
+    PC = 0
+    reg_A = 0
+    reg_B = 0
+    cmp_a = 0
+    cmp_b = 0
+    stack_pointer = 0
+    shift = 0
+    for x in range(0, len(method_area)):
+        method_area[x] = int(method_area[x], 16)
+    print method_area
+    stack_pointer = len(method_area) + local_size
+    local_var_ptr = len(method_area)
+    memory = np.array([method_area + local_var + stack], dtype='int32')
+
+    print memory
+
+    while PC <= len(method_area):
+        # instruction fetch
+        print ''
+        inst_reg = readmem(PC)
+        # decode & execute
+        #if inst_reg in inst_list:
+        print 'MEMORY:', memory
+        print line_num, '::', inst_reg, ':',
+        #print inst_list[inst_reg][0],
+        if inst_reg == '00':
+            print 'NOP'
+        elif inst_reg == int('01', 16):   # aconst_null
+            PUSH(0b000000000)
+        elif inst_reg == int('02', 16):    # iconst_-1
+            PUSH(-1)
+        elif inst_reg == int('03', 16):    # iconst_0
+            PUSH(0)
+        elif inst_reg == int('04', 16):    # iconst_1
+            PUSH(1)
+        elif inst_reg == int('05', 16):    # iconst_2
+            PUSH(2)
+        elif inst_reg == int('06', 16):    # iconst_3
+            PUSH(3)
+        elif inst_reg == int('07', 16):   # iconst_4
+            PUSH(4)
+        elif inst_reg == int('08', 16):   # iconst_5
+            PUSH(5)
+        elif inst_reg == int('09', 16):   # lconst_0
+            PUSH(0)
+            PUSH(0)
+        elif inst_reg == int('0a', 16):   # lconst_1
+            # big-endian config
+            PUSH(1)
+            PUSH(0)
+        elif inst_reg == int('10', 16):    # bipush
+            PC += 1
+            PUSH(readmem(PC))
+        elif inst_reg == int('11', 16):      # sipush
+            print 'call offset here'
+
+        elif inst_reg == int('15', 16):     # iload + 1 operand
+            reg = int(method_area[PC+1])
+            PUSH(memory[local_var_ptr+reg])
+            PC += 1
+        elif inst_reg == int('1b', 16):    #iload_1
+            PUSH(memory[local_var_ptr+1])
+        elif inst_reg == int('1c', 16):    #iload_2
+            PUSH(memory[local_var_ptr+2])
+        elif inst_reg == int('1d', 16):    #iload_3
+            PUSH(memory[local_var_ptr+3])
+        elif inst_reg == int('36', 16):   # istore + 1 operand
+            reg = int(method_area[PC+1])
+            value = POP()
+            writemem(local_var_ptr+reg, value)
+            PC += 1
+        elif inst_reg == int('3c', 16):   # istore_1
+            value = POP()
+            writemem(local_var_ptr+1, value)
+        elif inst_reg == int('3d', 16):   # istore_2
+            value = POP()
+            writemem(local_var_ptr+2, value)
+        elif inst_reg == int('3e', 16):   # istore_3
+            value = POP()
+            writemem(local_var_ptr+3, value)
+        elif inst_reg == int('57', 16):      # pop
+            stack_pointer -= 1
+        elif inst_reg == int('58', 16):      # pop_2
+            stack_pointer -= 2
+        elif inst_reg == int('59', 16):   # dup
+            DUP()
+        elif inst_reg == int('5a', 16):      # dup_x1
+            POP2()
+            PUSH(reg_A)
+            PUSH(reg_B)
+            PUSH(reg_A)
+        elif inst_reg == int('5b', 16):      # dup_x2
+            print 'two types possible, need to handle'
+        elif inst_reg == int('5c', 16):      # dup2
+            POP2()
+            PUSH(reg_A)
+            PUSH(reg_B)
+            PUSH(reg_A)
+            PUSH(reg_B)
+        elif inst_reg == int('5d', 16):
+            print 'two types possible, need to handle'
+        elif inst_reg == int('5e', 16):
+            print 'two types possible, need to handle'
+        elif inst_reg == int('60', 16):   # iadd
+            ALU_op(1)
+        elif inst_reg == int('64', 16):   # isub
+            ALU_op(2)
+        elif inst_reg == int('84', 16):   # iinc + 2 operands
+            INC()
+        elif inst_reg == int('9f', 16):    # if_icmpeq + 2 operands (equal to)
+            compare(1)
+
+        elif inst_reg == int('a0', 16):    # if_icmpne + 2 operands (not equal to)
+            compare(2)
+
+        elif inst_reg == int('a1', 16):    # if_icmplt + 2 operands (less then)
+            compare(3)
+
+        elif inst_reg == int('a2', 16):    # if_icmpge + 2 operands (greater than or equal to)
+            compare(4)
+
+        elif inst_reg == int('a3', 16):    # if_icmpgt + 2 operands (greater than)
+            compare(5)
+
+        elif inst_reg == int('a4', 16):    # if_icmple + 2 operands (less then or equal to)
+            compare(6)
+
+        elif inst_reg == int('a7', 16):    # goto + 2 operands
+            offset = OFFSET()
+            JUMP(offset)
+
+            print "-----------------------------------------------------------------"
+        elif inst_reg == int('b1', 16):    # return
+            print 'MEMORY:',
+            print memory
+            exit()
+        #no_of_operands = int(inst_list[memory[PC]][1])
+        #if no_of_operands > 0:
+            #for m in range(1, no_of_operands+1):
+                #PC += 1
+                #print '->', 'operand', m, ':', memory[PC],
+        line_num += 1
+
+        PC += 1
+        print 'PC:', PC
+        #else:
+            #exit()
+        #    print 'byte code not found'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
